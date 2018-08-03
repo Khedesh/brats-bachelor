@@ -3,10 +3,6 @@ from __future__ import print_function, division
 import os
 import warnings
 
-import torch
-
-from torch.utils.data import Dataset
-
 import SimpleITK as sitk
 import matplotlib.pyplot as plt
 
@@ -15,7 +11,7 @@ warnings.filterwarnings("ignore")
 plt.ion()
 
 
-class BratsDataset(Dataset):
+class BratsDataset():
 
     gt_fname = 'GT.mha'
     t2_fname = 'T2.mha'
@@ -29,7 +25,7 @@ class BratsDataset(Dataset):
 
     def get_image(self, index, fname):
         img = sitk.ReadImage(os.path.join(self.root_dir, str(index) + '/' + fname))
-        return torch.from_numpy(sitk.GetArrayFromImage(img))
+        return sitk.GetArrayFromImage(img)
 
     def __getitem__(self, index):
         image = self.get_image(index, self.t2_fname)
