@@ -12,20 +12,20 @@ def num_flat_features(x):
     return num_features
 
 
-class Net(nn.Module):
+class HGGNet(nn.Module):
     length = 240
     length4 = length / 4
 
     def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(4, 64, kernel_size=3, padding=(1, 1))
+        super(HGGNet, self).__init__()
+        self.conv1 = nn.Conv2d(1, 64, kernel_size=3, padding=(1, 1))
         self.conv2 = nn.Conv2d(64, 64, kernel_size=3, padding=(1, 1))
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=(1, 1))
         self.conv4 = nn.Conv2d(128, 128, kernel_size=3, padding=(1, 1))
 
         self.fc1 = nn.Linear(128 * self.length4 * self.length4, 256)
         self.fc2 = nn.Linear(256, 256)
-        self.fc3 = nn.Linear(256, 5)
+        self.fc3 = nn.Linear(256, 2)
 
     def forward(self, x):
         x = F.max_pool2d(

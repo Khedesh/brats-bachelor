@@ -1,10 +1,22 @@
 import torch
+from torch.nn import CrossEntropyLoss
+import torch.optim as optim
+from data import BratsDataset
 
-from model import Net
+from model import HGGNet
 
-net = Net()
-print(net)
+net = HGGNet()
+data = BratsDataset(root_dir='/Users/Khedesh/Desktop/Workspace/University/Project/Data/BRATS2015_Training/output/HGG')
+for i in range(len(data)):
+    in_data, target = data[i]
+    target = target.view(1, -1)
+    criterion = CrossEntropyLoss()
 
-in_data = torch.randn(1, 4, 1024, 1024)
-out_data = net(in_data)
-print(out_data)
+    optimizer = optim.SGD(net.parameters(), lr=0.01, nesterov=True)
+
+    # in your training loop:
+    optimizer.zero_grad()  # zero the gradient buffers
+    output = net(in_data)
+    loss = criterion(output, target)
+    loss.backward()
+    optimizer.step()  # Does the update
