@@ -22,7 +22,7 @@ if __name__ == '__main__':
     wfile = os.path.join(os.getcwd(), 'weights.h5')
     if os.path.exists(wfile):
         model.load_weights(wfile)
-    checkpoint = ModelCheckpoint(wfile, verbose=1, save_best_only=True)
+    checkpoint = ModelCheckpoint(wfile, verbose=1, save_best_only=True, period=1)
     print(data.shape, label.shape)
     model.fit(data, label, epochs=10, verbose=1, batch_size=1, callbacks=[checkpoint])
 
