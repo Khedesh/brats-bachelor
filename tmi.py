@@ -1,21 +1,9 @@
-import keras.backend as K
-
 from keras.layers import Conv2D, MaxPooling2D, Dense
 from keras.models import Sequential
 from keras.optimizers import SGD
 
 from model import BaseModel
-
-
-def dice_coef(y_true, y_pred, smooth=1):
-    yt = K.flatten(y_true)
-    yp = K.flatten(y_pred)
-    intersect = K.sum(yt * yp)
-    return (2.0 * intersect + smooth) / (K.sum(yt) + K.sum(yp) + smooth)
-
-
-def dice_coef_loss(y_true, y_pred):
-    return -dice_coef(y_true, y_pred)
+from util import dice_coef_loss, dice_coef
 
 
 class TMIModel(BaseModel):
