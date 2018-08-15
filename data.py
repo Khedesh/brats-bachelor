@@ -3,6 +3,7 @@ from __future__ import print_function, division
 import os
 import warnings
 
+import numpy as np
 import SimpleITK as sitk
 import matplotlib.pyplot as plt
 
@@ -20,12 +21,15 @@ class BratsDataset():
         self.root_dir = root_dir
 
     def __len__(self):
-        _, _, files = next(os.walk(self.root_dir))
-        return len(files)
+        _, folders, _ = next(os.walk(self.root_dir))
+        return len(folders)
 
     def get_image(self, index, fname):
-        img = sitk.ReadImage(os.path.join(self.root_dir, str(index) + '/' + fname))
-        return sitk.GetArrayFromImage(img)
+        path = os.path.join(self.root_dir, str(index) + '/' + fname)
+        if os.path.exists(path):
+            img = sitk.ReadImage(path)
+            return sitk.GetArrayFromImage(img)
+        return np.zeros(1)
 
     def __getitem__(self, index):
         image = self.get_image(index, self.t2_fname)

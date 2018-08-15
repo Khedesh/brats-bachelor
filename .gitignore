@@ -2,3 +2,4 @@ venv/
 *.pyc
 .idea/
 venv2/
+weights.h5
