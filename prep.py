@@ -1,6 +1,6 @@
 import gzip
 import sys
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     brd = D(root_dir)
 
-    executor = ThreadPoolExecutor(max_workers=5)
+    executor = ProcessPoolExecutor(max_workers=5)
 
     page = 30
     start = 0
