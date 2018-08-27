@@ -12,9 +12,10 @@ from tmi import TMIModel
 # sess = tfdbg.LocalCLIDebugWrapperSession(sess)
 # K.set_session(sess)
 #
+from unet import UnetModel
 
 if __name__ == '__main__':
-    model = TMIModel().get_model()
+    model = UnetModel(8, 240, 240).get_model()
     wfile = os.path.join(os.getcwd(), 'weights.h5')
     if os.path.exists(wfile):
         print('Loading Weights...')
@@ -34,6 +35,6 @@ if __name__ == '__main__':
     label_test = np.load(f)
     print(data_test.shape, label_test.shape)
 
-    # out_test = model.predict(data_test, batch_size=155, verbose=1)
-    # score = model.evaluate(data_test, label_test, batch_size=155, verbose=1)
-    # print(score)
+    out_test = model.predict(data_test, batch_size=155, verbose=1)
+    score = model.evaluate(data_test, label_test, batch_size=155, verbose=1)
+    print(score)
