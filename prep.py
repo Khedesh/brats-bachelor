@@ -52,11 +52,11 @@ if __name__ == '__main__':
 
     brd = D(root_dir)
 
-    executor = ProcessPoolExecutor(max_workers=5)
+    executor = ProcessPoolExecutor(max_workers=11)
 
-    page = 30
+    page = 20
     start = 0
     while start < len(brd):
         print('Start:', start)
         executor.submit(generate_data, start, start + page)
-        start += 30
+        start += page
