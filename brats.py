@@ -27,7 +27,7 @@ if __name__ == '__main__':
     f = gzip.GzipFile('process/label.npy.gz', 'r')
     label = np.load(f)
 
-    model.fit(data, label, epochs=1, verbose=1, batch_size=10, validation_split=0.2, callbacks=[checkpoint])
+    model.fit(data, label, epochs=1, verbose=1, batch_size=40, validation_split=0.2, callbacks=[checkpoint])
 
     f = gzip.GzipFile('process/data_test.npy.gz', 'r')
     data_test = np.load(f)
@@ -35,6 +35,6 @@ if __name__ == '__main__':
     label_test = np.load(f)
     print(data_test.shape, label_test.shape)
 
-    out_test = model.predict(data_test, batch_size=155, verbose=1)
-    score = model.evaluate(data_test, label_test, batch_size=155, verbose=1)
+    out_test = model.predict(data_test, batch_size=15, verbose=1)
+    score = model.evaluate(data_test, label_test, batch_size=15, verbose=1)
     print(score)
