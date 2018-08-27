@@ -10,31 +10,25 @@ class TMIModel(BaseModel):
     def get_model(self):
         model = Sequential()
 
-        model.add(
-            Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', data_format='channels_last',
-                   activation='relu'))
-        model.add(
-            Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', data_format='channels_last',
-                   activation='relu'))
-        model.add(
-            Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', data_format='channels_last',
-                   activation='relu'))
+        model.add(Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', data_format='channels_last',
+                         activation='relu'))
+        model.add(Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', data_format='channels_last',
+                         activation='relu'))
+        model.add(Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', data_format='channels_last',
+                         activation='relu'))
         model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same', data_format='channels_last'))
 
-        model.add(
-            Conv2D(128, kernel_size=(3, 3), strides=(1, 1), padding='same', data_format='channels_last',
-                   activation='relu'))
-        model.add(
-            Conv2D(128, kernel_size=(3, 3), strides=(1, 1), padding='same', data_format='channels_last',
-                   activation='relu'))
-        model.add(
-            Conv2D(128, kernel_size=(3, 3), strides=(1, 1), padding='same', data_format='channels_last',
-                   activation='relu'))
+        model.add(Conv2D(128, kernel_size=(3, 3), strides=(1, 1), padding='same', data_format='channels_last',
+                         activation='relu'))
+        model.add(Conv2D(128, kernel_size=(3, 3), strides=(1, 1), padding='same', data_format='channels_last',
+                         activation='relu'))
+        model.add(Conv2D(128, kernel_size=(3, 3), strides=(1, 1), padding='same', data_format='channels_last',
+                         activation='relu'))
         model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same', data_format='channels_last'))
 
         model.add(Dense(256, input_shape=(6272,), activation='relu'))
         model.add(Dense(256, activation='relu'))
-        model.add(Dense(2, activation='relu'))
+        model.add(Dense(5, activation='relu'))
 
         sgd = SGD(lr=0.01, momentum=0.5, nesterov=True)
         model.compile(optimizer=sgd,

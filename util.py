@@ -9,4 +9,4 @@ def dice_coef(y_true, y_pred, smooth=1):
 
 
 def dice_coef_loss(y_true, y_pred):
-    return -dice_coef(y_true, y_pred)
+    return 1.0-dice_coef(y_true, y_pred)
