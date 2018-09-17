@@ -14,6 +14,9 @@ plt.ion()
 
 class BratsDataset():
 
+    t1_fname = 'T1.mha'
+    t1c_fname = 'T1c.mha'
+    f_fname = 'F.mha'
     gt_fname = 'GT.mha'
     t2_fname = 'T2.mha'
 
@@ -32,6 +35,9 @@ class BratsDataset():
         return np.zeros(1)
 
     def __getitem__(self, index):
-        image = self.get_image(index, self.t2_fname)
-        label = self.get_image(index, self.gt_fname)
-        return image, label
+        t1 = self.get_image(index, self.t1_fname)
+        t1c = self.get_image(index, self.t1c_fname)
+        f = self.get_image(index, self.f_fname)
+        t2 = self.get_image(index, self.t2_fname)
+        gt = self.get_image(index, self.gt_fname)
+        return t1, t1c, f, t2, gt
