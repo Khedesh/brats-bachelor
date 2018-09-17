@@ -16,7 +16,8 @@ from unet import UnetModel
 
 if __name__ == '__main__':
     model = UnetModel(8, 240, 240).get_model()
-    wfile = os.path.join(os.getcwd(), 'weights.h5')
+    wfile = os.path.join(
+        os.getcwd(), 'weights.h5')
     if os.path.exists(wfile):
         print('Loading Weights...')
         model.load_weights(wfile)
