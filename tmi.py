@@ -31,7 +31,7 @@ class TMIModel(BaseModel):
         model.add(Dense(256, activation='relu'))
         model.add(Dense(5))
         model.add(Activation('softmax'))
-        model.add(Activation(MaxProb))
+        # model.add(Activation(MaxProb))
 
         sgd = SGD(lr=0.01, momentum=0.5, nesterov=True)
         model.compile(optimizer=sgd,

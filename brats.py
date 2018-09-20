@@ -20,6 +20,13 @@ def get_data_and_gt(D, index):
     return data, gt
 
 
+def categoricalize(label):
+    ret = np.zeros((label.shape[0], 5), dtype='int8')
+    for i in range(label.shape[0]):
+        ret[i][label.astype(dtype='int8')[i]] = 1
+    return ret
+
+
 def data_generator(D, batch_size):
     x, y = 0, 0
     index = 0
@@ -78,7 +85,7 @@ def data_generator(D, batch_size):
                 axis += remainder
                 remainder = 0
 
-        yield indata, inlabel
+        yield indata, categoricalize(inlabel)
 
 
 if __name__ == '__main__':
@@ -89,13 +96,13 @@ if __name__ == '__main__':
     if os.path.exists(wfile):
         print('Loading Weights...')
         model.load_weights(wfile)
-    checkpoint = ModelCheckpoint(wfile, verbose=1, monitor='val_loss', save_best_only=True)
-    bs = 256
+    checkpoint = ModelCheckpoint(wfile, verbose=1, monitor='val_loss', save_best_only=True, period=1)
+    bs = int(sys.argv[2])
 
     try:
         for X, y in data_generator(D, bs):
             print('Generated: ', X.shape, y.shape)
-            model.fit(X, y, epochs=1, verbose=1, batch_size=32, callbacks=[checkpoint])
+            model.fit(X, y, epochs=1, verbose=1, batch_size=int(sys.argv[3]), validation_split=0.25, callbacks=[checkpoint])
     except StopIteration:
         print('Iteration ended')
 
