@@ -102,7 +102,7 @@ if __name__ == '__main__':
     try:
         for X, y in data_generator(D, bs):
             print('Generated: ', X.shape, y.shape)
-            model.fit(X, y, epochs=1, verbose=1, batch_size=int(sys.argv[3]), validation_split=0.25, callbacks=[checkpoint])
+            model.fit(X, y, epochs=int(sys.argv[3]), verbose=1, batch_size=int(sys.argv[4]), validation_split=0.25, callbacks=[checkpoint])
     except StopIteration:
         print('Iteration ended')
 
