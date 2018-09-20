@@ -1,37 +1,84 @@
 import os
 import sys
-import gzip
 
 import numpy as np
 from keras.callbacks import ModelCheckpoint
-from tensorflow.python import debug as tfdbg
-
-from tmi import TMIModel
 
 from data import BratsDataset
+from tmi import TMIModel
 
-import matplotlib.pyplot as plt
 
-
-#
 # sess = K.get_session()
 # sess = tfdbg.LocalCLIDebugWrapperSession(sess)
 # K.set_session(sess)
-#
 
 
-def data_generator(D, index):
-    t1, t1c, f, t2, gt = D[index]
-    data = np.stack((t1, t1c, f, t2), axis=1)
-    data = np.pad(data, pad_width=((0,), (0,), (16,), (16,)), mode='constant', constant_values=0)
-    print(data.shape)
-    for r in range(155):
-        for x in range(240):
-            for y in range(240):
-                indata = data[r][:, x:x + 33, y:y + 33]
-                inlabel = gt[r][x, y]
-                print(indata.shape, inlabel)
-                yield indata, inlabel
+def get_data_and_gt(D, index):
+    t1, t1c, f, t2, gt = D[index + 1]
+    data = np.stack((t1, t1c, f, t2), axis=3)
+    data = np.pad(data, pad_width=((0,), (16,), (16,), (0,)), mode='constant', constant_values=0)
+    return data, gt
+
+
+def data_generator(D, batch_size):
+    x, y = 0, 0
+    index = 0
+    data, gt = get_data_and_gt(D, index)
+    print('Data:', data.shape, 'GT:', gt[0:32].shape)
+    depth = 155
+    axis = 0
+    end = False
+    while not end:
+        remainder = batch_size
+        indata = np.empty([0, 33, 33, 4])
+        inlabel = np.empty([0])
+        while remainder > 0:
+            if remainder > depth:
+                indata = np.append(indata, data[axis:depth][:, x:x + 33, y:y + 33, :], axis=0)
+                inlabel = np.append(inlabel, gt[axis:depth][:, x, y])
+                index += 1
+                if index == len(D):
+                    print('X increment')
+                    x += 1
+                    if x == 240:
+                        x = 0
+                        print('Y increment')
+                        y += 1
+                        if y == 240:
+                            end = True
+                            break
+                    index = 0
+                data, gt = get_data_and_gt(D, index)
+                indata = np.append(indata, data[0:axis][:, x:x + 33, y:y + 33, :], axis=0)
+                inlabel = np.append(inlabel, gt[0:axis][:, x, y])
+                remainder -= depth
+            elif axis + remainder > depth:
+                indata = np.append(indata, data[axis:][:, x:x + 33, y:y + 33, :], axis=0)
+                inlabel = np.append(inlabel, gt[axis:][:, x, y])
+                index += 1
+                if index == len(D):
+                    print('X increment')
+                    x += 1
+                    if x == 240:
+                        x = 0
+                        print('Y increment')
+                        y += 1
+                        if y == 240:
+                            end = True
+                            break
+                    index = 0
+                data, gt = get_data_and_gt(D, index)
+                axis += remainder - depth
+                indata = np.append(indata, data[0:axis][:, x:x + 33, y:y + 33, :], axis=0)
+                inlabel = np.append(inlabel, gt[0:axis][:, x, y])
+                remainder = 0
+            else:
+                indata = np.append(indata, data[axis:axis + remainder][:, x:x + 33, y:y + 33, :], axis=0)
+                inlabel = np.append(inlabel, gt[axis:axis + remainder][:, x, y])
+                axis += remainder
+                remainder = 0
+
+        yield indata, inlabel
 
 
 if __name__ == '__main__':
@@ -43,11 +90,14 @@ if __name__ == '__main__':
         print('Loading Weights...')
         model.load_weights(wfile)
     checkpoint = ModelCheckpoint(wfile, verbose=1, monitor='val_loss', save_best_only=True)
+    bs = 256
 
-    for i in range(len(D)):
-        model.fit_generator(data_generator(D, i + 1),
-                            epochs=1, verbose=1,
-                            workers=10, callbacks=[checkpoint])
+    try:
+        for X, y in data_generator(D, bs):
+            print('Generated: ', X.shape, y.shape)
+            model.fit(X, y, epochs=1, verbose=1, batch_size=32, callbacks=[checkpoint])
+    except StopIteration:
+        print('Iteration ended')
 
         # f = gzip.GzipFile('process/data_test.npy.gz', 'r')
         # data_test = np.load(f)
