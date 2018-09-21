@@ -1,5 +1,4 @@
 import os
-import sys
 
 import numpy as np
 from keras.callbacks import ModelCheckpoint
@@ -7,7 +6,6 @@ from keras.callbacks import ModelCheckpoint
 import config
 from data import BratsDataset
 from tmi import TMIModel
-
 
 # sess = K.get_session()
 # sess = tfdbg.LocalCLIDebugWrapperSession(sess)
@@ -46,17 +44,17 @@ def data_generator(D, batch_size, min_index=0, max_index=-1):
                 indata = np.append(indata, data[axis:depth][:, x:x + 33, y:y + 33, :], axis=0)
                 inlabel = np.append(inlabel, gt[axis:depth][:, x, y])
                 index += 1
-                if index == max_index:
-                    print('X increment')
+                if index > max_index:
+                    print('X increment:', x)
                     x += 1
                     if x == 240:
                         x = 0
-                        print('Y increment')
+                        print('Y increment:', y)
                         y += 1
                         if y == 240:
                             end = True
                             break
-                    index = 0
+                    index = min_index
                 data, gt = get_data_and_gt(D, index)
                 indata = np.append(indata, data[0:axis][:, x:x + 33, y:y + 33, :], axis=0)
                 inlabel = np.append(inlabel, gt[0:axis][:, x, y])
@@ -65,17 +63,17 @@ def data_generator(D, batch_size, min_index=0, max_index=-1):
                 indata = np.append(indata, data[axis:][:, x:x + 33, y:y + 33, :], axis=0)
                 inlabel = np.append(inlabel, gt[axis:][:, x, y])
                 index += 1
-                if index == max_index:
-                    print('X increment')
+                if index > max_index:
+                    print('X increment:', x)
                     x += 1
                     if x == 240:
                         x = 0
-                        print('Y increment')
+                        print('Y increment:', y)
                         y += 1
                         if y == 240:
                             end = True
                             break
-                    index = 0
+                    index = min_index
                 data, gt = get_data_and_gt(D, index)
                 axis += remainder - depth
                 indata = np.append(indata, data[0:axis][:, x:x + 33, y:y + 33, :], axis=0)
@@ -102,6 +100,7 @@ if __name__ == '__main__':
     bs = config.DATA_CONFIG['batch_size']
 
     if config.APP_CONFIG['train']:
+        print('Training...')
         try:
             for X, y in data_generator(D, bs, min_index=config.DATA_CONFIG['min_train_index'],
                                        max_index=config.DATA_CONFIG['max_train_index']):
@@ -112,9 +111,9 @@ if __name__ == '__main__':
         except StopIteration:
             print('Training iteration ended')
 
-    print(model.metrics_names)
-
     if config.APP_CONFIG['test']:
+        print('Testing...')
+        print('Metrics:', model.metrics_names)
         try:
             for X, y in data_generator(D, bs, min_index=config.DATA_CONFIG['min_test_index'],
                                        max_index=config.DATA_CONFIG['max_test_index']):
@@ -123,3 +122,14 @@ if __name__ == '__main__':
                 print('Score:', score)
         except StopIteration:
             print('Test iteration ended')
+
+    if config.APP_CONFIG['predict']:
+        print('Predicting...')
+        try:
+            for i in range(config.DATA_CONFIG['min_predict_index'], config.DATA_CONFIG['max_predict_index']):
+                for X, _ in data_generator(D, 155 * 240 * 240, min_index=i, max_index=i):
+                    print('Generated for predict:', X.shape)
+                    output = model.predict(X, verbose=1, batch_size=config.PREDICT_CONFIG['batch_size'])
+                    print(output)
+        except StopIteration:
+            print('Predict iteration ended')
