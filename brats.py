@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from keras.callbacks import ModelCheckpoint
 
+import config
 from data import BratsDataset
 from tmi import TMIModel
 
@@ -27,9 +28,10 @@ def categoricalize(label):
     return ret
 
 
-def data_generator(D, batch_size):
+def data_generator(D, batch_size, min_index=0, max_index=-1):
     x, y = 0, 0
-    index = 0
+    index = min_index
+    max_index = len(D) if max_index == -1 else max_index
     data, gt = get_data_and_gt(D, index)
     print('Data:', data.shape, 'GT:', gt[0:32].shape)
     depth = 155
@@ -44,7 +46,7 @@ def data_generator(D, batch_size):
                 indata = np.append(indata, data[axis:depth][:, x:x + 33, y:y + 33, :], axis=0)
                 inlabel = np.append(inlabel, gt[axis:depth][:, x, y])
                 index += 1
-                if index == len(D):
+                if index == max_index:
                     print('X increment')
                     x += 1
                     if x == 240:
@@ -63,7 +65,7 @@ def data_generator(D, batch_size):
                 indata = np.append(indata, data[axis:][:, x:x + 33, y:y + 33, :], axis=0)
                 inlabel = np.append(inlabel, gt[axis:][:, x, y])
                 index += 1
-                if index == len(D):
+                if index == max_index:
                     print('X increment')
                     x += 1
                     if x == 240:
@@ -89,29 +91,35 @@ def data_generator(D, batch_size):
 
 
 if __name__ == '__main__':
-    D = BratsDataset(sys.argv[1])
+    D = BratsDataset(config.DATA_CONFIG['root_dir'])
     print('Number of data: %d' % len(D))
     model = TMIModel().get_model()
-    wfile = os.path.join(os.getcwd(), 'weights.h5')
+    wfile = os.path.join(os.getcwd(), config.APP_CONFIG['weights_file'])
     if os.path.exists(wfile):
         print('Loading Weights...')
         model.load_weights(wfile)
     checkpoint = ModelCheckpoint(wfile, verbose=1, monitor='val_loss', save_best_only=True, period=1)
-    bs = int(sys.argv[2])
+    bs = config.DATA_CONFIG['batch_size']
 
-    try:
-        for X, y in data_generator(D, bs):
-            print('Generated: ', X.shape, y.shape)
-            model.fit(X, y, epochs=int(sys.argv[3]), verbose=1, batch_size=int(sys.argv[4]), validation_split=0.25, callbacks=[checkpoint])
-    except StopIteration:
-        print('Iteration ended')
+    if config.APP_CONFIG['train']:
+        try:
+            for X, y in data_generator(D, bs, min_index=config.DATA_CONFIG['min_train_index'],
+                                       max_index=config.DATA_CONFIG['max_train_index']):
+                print('Generated for train: ', X.shape, y.shape)
+                model.fit(X, y, epochs=config.TRAIN_CONFIG['epochs'], verbose=1,
+                          batch_size=config.TRAIN_CONFIG['batch_size'],
+                          validation_split=0.25, callbacks=[checkpoint])
+        except StopIteration:
+            print('Training iteration ended')
 
-        # f = gzip.GzipFile('process/data_test.npy.gz', 'r')
-        # data_test = np.load(f)
-        # f = gzip.GzipFile('process/label_test.npy.gz', 'r')
-        # label_test = np.load(f)
-        # print(data_test.shape, label_test.shape)
+    print(model.metrics_names)
 
-        # out_test = model.predict(data_test, batch_size=155, verbose=1)
-        # score = model.evaluate(data_test, label_test, batch_size=155, verbose=1)
-        # print(score)
+    if config.APP_CONFIG['test']:
+        try:
+            for X, y in data_generator(D, bs, min_index=config.DATA_CONFIG['min_test_index'],
+                                       max_index=config.DATA_CONFIG['max_test_index']):
+                print('Generated for test:', X.shape, y.shape)
+                score = model.evaluate(X, y, verbose=1, batch_size=config.TEST_CONFIG['batch_size'])
+                print('Score:', score)
+        except StopIteration:
+            print('Test iteration ended')
