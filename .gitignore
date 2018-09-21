@@ -4,3 +4,4 @@ venv/
 venv2/
 weights.h5
 process/
+config.py
