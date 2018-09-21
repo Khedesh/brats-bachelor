@@ -11,10 +11,6 @@ from tmi import TMIModel
 import tensorflow as tf
 from keras.backend import tensorflow_backend as K
 
-with tf.Session(config=tf.ConfigProto(intra_op_parallelism_threads=16)) as sess:
-    K.set_session(sess)
-
-
 # sess = K.get_session()
 # sess = tfdbg.LocalCLIDebugWrapperSession(sess)
 # K.set_session(sess)
@@ -107,57 +103,60 @@ def data_generator(D, batch_size, min_index=0, max_index=-1):
 
 
 if __name__ == '__main__':
-    D = BratsDataset(config.DATA_CONFIG['root_dir'])
-    print('Number of data: %d' % len(D))
-    model = TMIModel().get_model()
-    wfile = os.path.join(os.getcwd(), config.APP_CONFIG['weights_file'])
-    if os.path.exists(wfile):
-        print('Loading Weights...')
-        model.load_weights(wfile)
-    checkpoint = ModelCheckpoint(wfile, verbose=1, monitor='val_loss', save_best_only=True, period=1)
-    bs = config.DATA_CONFIG['batch_size']
+    with tf.Session(config=tf.ConfigProto(intra_op_parallelism_threads=16)) as sess:
+        K.set_session(sess)
 
-    if config.APP_CONFIG['train']:
-        print('Training...')
-        try:
-            for X, y in data_generator(D, bs, min_index=config.DATA_CONFIG['min_train_index'],
-                                       max_index=config.DATA_CONFIG['max_train_index']):
-                print('Generated for train: ', X.shape, y.shape)
-                model.fit(X, y, epochs=config.TRAIN_CONFIG['epochs'], verbose=1,
-                          batch_size=config.TRAIN_CONFIG['batch_size'],
-                          validation_split=0.25, callbacks=[checkpoint])
-        except StopIteration:
-            print('Training iteration ended')
+        D = BratsDataset(config.DATA_CONFIG['root_dir'])
+        print('Number of data: %d' % len(D))
+        model = TMIModel().get_model()
+        wfile = os.path.join(os.getcwd(), config.APP_CONFIG['weights_file'])
+        if os.path.exists(wfile):
+            print('Loading Weights...')
+            model.load_weights(wfile)
+        checkpoint = ModelCheckpoint(wfile, verbose=1, monitor='val_loss', save_best_only=True, period=1)
+        bs = config.DATA_CONFIG['batch_size']
 
-    if config.APP_CONFIG['test']:
-        print('Testing...')
-        print('Metrics:', model.metrics_names)
-        try:
-            for X, y in data_generator(D, bs, min_index=config.DATA_CONFIG['min_test_index'],
-                                       max_index=config.DATA_CONFIG['max_test_index']):
-                print('Generated for test:', X.shape, y.shape)
-                score = model.evaluate(X, y, verbose=1, batch_size=config.TEST_CONFIG['batch_size'])
-                print('Score:', score)
-        except StopIteration:
-            print('Test iteration ended')
+        if config.APP_CONFIG['train']:
+            print('Training...')
+            try:
+                for X, y in data_generator(D, bs, min_index=config.DATA_CONFIG['min_train_index'],
+                                           max_index=config.DATA_CONFIG['max_train_index']):
+                    print('Generated for train: ', X.shape, y.shape)
+                    model.fit(X, y, epochs=config.TRAIN_CONFIG['epochs'], verbose=1,
+                              batch_size=config.TRAIN_CONFIG['batch_size'],
+                              validation_split=0.25, callbacks=[checkpoint])
+            except StopIteration:
+                print('Training iteration ended')
 
-    if config.APP_CONFIG['predict']:
-        print('Predicting...')
-        try:
-            for i in range(config.DATA_CONFIG['min_predict_index'], config.DATA_CONFIG['max_predict_index']):
-                x, y = 0, 0
-                image = np.empty((155, 240, 240))
-                for X, _ in data_generator(D, 155, min_index=i, max_index=i):
-                    print('Generated for predict:', X.shape)
-                    output = model.predict(X, verbose=1, batch_size=config.PREDICT_CONFIG['batch_size'])
-                    image[:, x, y] = decategoricalize(output)
-                    x += 1
-                    if x == 240:
-                        y += 1
-                        x = 0
-                        if y == 240:
-                            break
-                simg = sitk.GetImageFromArray(image)
-                sitk.WriteImage(simg, 'PR.' + str(i) + '.mha')
-        except StopIteration:
-            print('Predict iteration ended')
+        if config.APP_CONFIG['test']:
+            print('Testing...')
+            print('Metrics:', model.metrics_names)
+            try:
+                for X, y in data_generator(D, bs, min_index=config.DATA_CONFIG['min_test_index'],
+                                           max_index=config.DATA_CONFIG['max_test_index']):
+                    print('Generated for test:', X.shape, y.shape)
+                    score = model.evaluate(X, y, verbose=1, batch_size=config.TEST_CONFIG['batch_size'])
+                    print('Score:', score)
+            except StopIteration:
+                print('Test iteration ended')
+
+        if config.APP_CONFIG['predict']:
+            print('Predicting...')
+            try:
+                for i in range(config.DATA_CONFIG['min_predict_index'], config.DATA_CONFIG['max_predict_index']):
+                    x, y = 0, 0
+                    image = np.empty((155, 240, 240))
+                    for X, _ in data_generator(D, 155, min_index=i, max_index=i):
+                        print('Generated for predict:', X.shape)
+                        output = model.predict(X, verbose=1, batch_size=config.PREDICT_CONFIG['batch_size'])
+                        image[:, x, y] = decategoricalize(output)
+                        x += 1
+                        if x == 240:
+                            y += 1
+                            x = 0
+                            if y == 240:
+                                break
+                    simg = sitk.GetImageFromArray(image)
+                    sitk.WriteImage(simg, 'PR.' + str(i) + '.mha')
+            except StopIteration:
+                print('Predict iteration ended')
