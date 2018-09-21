@@ -7,6 +7,7 @@ import config
 from data import BratsDataset
 from tmi import TMIModel
 
+
 # sess = K.get_session()
 # sess = tfdbg.LocalCLIDebugWrapperSession(sess)
 # K.set_session(sess)
@@ -23,6 +24,14 @@ def categoricalize(label):
     ret = np.zeros((label.shape[0], 5), dtype='int8')
     for i in range(label.shape[0]):
         ret[i][label.astype(dtype='int8')[i]] = 1
+    return ret
+
+
+def decategoricalize(output):
+    ret = np.empty(output.shape[:-1])
+    with np.nditer(ret, op_flags=['readwrite']) as it:
+        for x in it:
+            x[...] = np.argmax(output[...])
     return ret
 
 
@@ -45,6 +54,7 @@ def data_generator(D, batch_size, min_index=0, max_index=-1):
                 inlabel = np.append(inlabel, gt[axis:depth][:, x, y])
                 index += 1
                 if index > max_index:
+                    print('X, Y:', x, y)
                     print('X increment:', x)
                     x += 1
                     if x == 240:
@@ -64,6 +74,7 @@ def data_generator(D, batch_size, min_index=0, max_index=-1):
                 inlabel = np.append(inlabel, gt[axis:][:, x, y])
                 index += 1
                 if index > max_index:
+                    print('X, Y:', x, y)
                     print('X increment:', x)
                     x += 1
                     if x == 240:
@@ -127,9 +138,17 @@ if __name__ == '__main__':
         print('Predicting...')
         try:
             for i in range(config.DATA_CONFIG['min_predict_index'], config.DATA_CONFIG['max_predict_index']):
-                for X, _ in data_generator(D, 155 * 240 * 240, min_index=i, max_index=i):
+                x, y = 0, 0
+                image = np.empty((155, 240, 240))
+                for X, _ in data_generator(D, 155, min_index=i, max_index=i):
                     print('Generated for predict:', X.shape)
                     output = model.predict(X, verbose=1, batch_size=config.PREDICT_CONFIG['batch_size'])
-                    print(output)
+                    image[:, x, y] = decategoricalize(output)
+                    x += 1
+                    if x == 240:
+                        y += 1
+                        x = 0
+                        if y == 240:
+                            break
         except StopIteration:
             print('Predict iteration ended')
