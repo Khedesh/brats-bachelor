@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 from keras.callbacks import ModelCheckpoint
+import SimpleITK as sitk
 
 import config
 from data import BratsDataset
@@ -150,5 +151,7 @@ if __name__ == '__main__':
                         x = 0
                         if y == 240:
                             break
+                simg = sitk.GetImageFromArray(image)
+                sitk.WriteImage(simg, 'PR.' + str(i) + '.mha')
         except StopIteration:
             print('Predict iteration ended')
