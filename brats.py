@@ -8,6 +8,12 @@ import config
 from data import BratsDataset
 from tmi import TMIModel
 
+import tensorflow as tf
+from keras.backend import tensorflow_backend as K
+
+with tf.Session(config=tf.ConfigProto(intra_op_parallelism_threads=16)) as sess:
+    K.set_session(sess)
+
 
 # sess = K.get_session()
 # sess = tfdbg.LocalCLIDebugWrapperSession(sess)
