@@ -1,4 +1,5 @@
 import os
+import sys
 
 import numpy as np
 from keras.callbacks import ModelCheckpoint
@@ -10,6 +11,7 @@ from tmi import TMIModel
 
 import tensorflow as tf
 from keras.backend import tensorflow_backend as K
+
 
 # sess = K.get_session()
 # sess = tfdbg.LocalCLIDebugWrapperSession(sess)
@@ -38,8 +40,11 @@ def decategoricalize(output):
     return ret
 
 
-def data_generator(D, batch_size, min_index=0, max_index=-1):
-    x, y = 0, 0
+def data_generator(D, batch_size,
+                   min_index=0, max_index=-1,
+                   min_x=0, max_x=239,
+                   min_y=0, max_y=239):
+    x, y = min_x, min_y
     index = min_index
     max_index = len(D) if max_index == -1 else max_index
     data, gt = get_data_and_gt(D, index)
@@ -60,11 +65,11 @@ def data_generator(D, batch_size, min_index=0, max_index=-1):
                     print('X, Y:', x, y)
                     print('X increment:', x)
                     x += 1
-                    if x == 240:
-                        x = 0
+                    if x > max_x:
+                        x = min_x
                         print('Y increment:', y)
                         y += 1
-                        if y == 240:
+                        if y > max_y:
                             end = True
                             break
                     index = min_index
@@ -80,11 +85,11 @@ def data_generator(D, batch_size, min_index=0, max_index=-1):
                     print('X, Y:', x, y)
                     print('X increment:', x)
                     x += 1
-                    if x == 240:
-                        x = 0
+                    if x > max_x:
+                        x = min_x
                         print('Y increment:', y)
                         y += 1
-                        if y == 240:
+                        if y > max_y:
                             end = True
                             break
                     index = min_index
@@ -142,21 +147,28 @@ if __name__ == '__main__':
 
         if config.APP_CONFIG['predict']:
             print('Predicting...')
-            try:
-                for i in range(config.DATA_CONFIG['min_predict_index'], config.DATA_CONFIG['max_predict_index']):
+            for i in range(config.DATA_CONFIG['min_predict_index'],
+                           config.DATA_CONFIG['max_predict_index']):
+                try:
                     x, y = 0, 0
-                    image = np.empty((155, 240, 240))
-                    for X, _ in data_generator(D, 155, min_index=i, max_index=i):
+                    dx = int(sys.argv[2]) - int(sys.argv[1]) + 1
+                    image = np.empty((155, dx, 240))
+                    for X, _ in data_generator(D, config.PREDICT_CONFIG['batch_size'],
+                                               min_index=i, max_index=i,
+                                               min_x=int(sys.argv[1]), max_x=int(sys.argv[2])):
                         print('Generated for predict:', X.shape)
-                        output = model.predict(X, verbose=1, batch_size=config.PREDICT_CONFIG['batch_size'])
-                        image[:, x, y] = decategoricalize(output)
+                        output = model.predict(X, verbose=1,
+                                               batch_size=config.PREDICT_CONFIG['batch_size'])
+                        output = decategoricalize(output)
+                        image[:, x, y] = output
                         x += 1
-                        if x == 240:
+                        if x >= dx:
                             y += 1
                             x = 0
                             if y == 240:
                                 break
-                    simg = sitk.GetImageFromArray(image)
-                    sitk.WriteImage(simg, 'PR.' + str(i) + '.mha')
-            except StopIteration:
-                print('Predict iteration ended')
+                        # simg = sitk.GetImageFromArray(image)
+                        # sitk.WriteImage(simg, 'PR.' + str(i) + '.mha')
+                    np.save('/tmp/ppr.%d.%d.npy' % (i, x), image)
+                except StopIteration:
+                    print('Predict iteration ended')

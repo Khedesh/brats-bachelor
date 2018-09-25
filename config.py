@@ -7,7 +7,7 @@ APP_CONFIG = {
 }
 
 DATA_CONFIG = {
-    'root_dir': '/Users/Khedesh/Desktop/Workspace/University/Project/Data/BRATS2015_Training/train/HGG',
+    'root_dir': '/home/mohammad/Desktop/Workspace/University/bachelor/data/train/HGG',
     'batch_size': 256,
     'min_train_index': 0,
     'max_train_index': 4,
@@ -27,5 +27,5 @@ TEST_CONFIG = {
 }
 
 PREDICT_CONFIG = {
-    'batch_size': 32,
+    'batch_size': 155,
 }
